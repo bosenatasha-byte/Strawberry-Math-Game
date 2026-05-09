@@ -154,7 +154,7 @@
 </div>
 
 <script>
-    let currentAnswer = 0;
+   let currentAnswer = 0;
 
     function generateProblem() {
         const isMultiplication = Math.random() > 0.5;
@@ -172,48 +172,20 @@
         }
     }
 
-    function strawberryBurst() {
-        // Red particles
-        confetti({
-            particleCount: 100,
-            spread: 70,
-            origin: { y: 0.6 },
-            colors: ['#FF0000', '#FF69B4']
-        });
-        // Strawberry Emojis
-        const strawberry = confetti.shapeFromText({ text: '🍓', scalar: 3 });
-        confetti({
-            shapes: [strawberry],
-            particleCount: 15,
-            scalar: 3,
-            origin: { y: 0.6 }
-        });
-    }
-
-    function brainFreeze() {
-        document.body.style.backgroundColor = 'var(--ice)';
-        document.getElementById('ice-overlay').classList.add('ice-active');
-        document.getElementById('problem').classList.add('shivering');
-
-        setTimeout(() => {
-            document.body.style.backgroundColor = 'var(--lime)';
-            document.getElementById('ice-overlay').classList.remove('ice-active');
-            document.getElementById('problem').classList.remove('shivering');
-        }, 1200);
-    }
-
     function checkAnswer() {
         const input = document.getElementById('user-answer');
         const checkBtn = document.getElementById('check-btn');
         const nextBtn = document.getElementById('next-btn');
         const feedback = document.getElementById('feedback');
 
+        // If user didn't type anything, do nothing
         if (input.value === "") return;
 
+        // Show feedback section
         feedback.style.display = "block";
         
         if (parseInt(input.value) === currentAnswer) {
-            strawberryBurst();
+            strawberryBurst(); // From the confetti library
             feedback.innerText = "SWEET! 🍓";
             feedback.style.color = "var(--strawberry)";
         } else {
@@ -222,28 +194,35 @@
             feedback.style.color = "var(--black)";
         }
 
-        // SWAP BUTTONS: Hide Check, Show Next
-        checkBtn.style.display = "none";
-        nextBtn.style.display = "block";
+        // FORCE THE BUTTON SWAP
+        // We hide the red check button and show the black next button
+        checkBtn.setAttribute("style", "display: none !important");
+        nextBtn.setAttribute("style", "display: block !important");
+        
+        // Hide the keyboard on mobile so user can see the button
+        input.blur(); 
     }
 
     function nextProblem() {
-        // Reset the UI for the next question
+        // 1. Clear the box
         document.getElementById('user-answer').value = "";
+        
+        // 2. Hide feedback
         document.getElementById('feedback').style.display = "none";
         
-        // SWAP BUTTONS BACK: Show Check, Hide Next
-        document.getElementById('next-btn').style.display = "none";
-        document.getElementById('check-btn').style.display = "block";
+        // 3. Swap buttons back (Show Check, Hide Next)
+        document.getElementById('next-btn').setAttribute("style", "display: none !important");
+        document.getElementById('check-btn').setAttribute("style", "display: block !important");
         
+        // 4. New Math
         generateProblem();
-        document.getElementById('user-answer').focus();
     }
 
-    // Keyboard support (Enter key works for both buttons)
+    // This makes the "Go" / "Enter" button on your phone keyboard work
     document.addEventListener('keypress', (e) => {
         if (e.key === 'Enter') {
-            if (document.getElementById('next-btn').style.display === 'block') {
+            const nextBtn = document.getElementById('next-btn');
+            if (nextBtn.style.display === 'block' || nextBtn.getAttribute('style')?.includes('block')) {
                 nextProblem();
             } else {
                 checkAnswer();
