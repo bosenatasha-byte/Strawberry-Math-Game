@@ -52,7 +52,6 @@
             display: inline-block;
         }
 
-        /* Input Styling */
         input[type="number"] {
             width: 100%;
             padding: 15px;
@@ -68,15 +67,25 @@
         button {
             width: 100%;
             padding: 20px;
-            font-size: 1.5rem;
+            font-size: 1.8rem;
             font-weight: 900;
             text-transform: uppercase;
             border: 4px solid var(--black);
             cursor: pointer;
-            background-color: var(--strawberry);
-            color: var(--white);
             box-shadow: 4px 4px 0px var(--black);
             margin-bottom: 10px;
+            transition: transform 0.1s;
+        }
+
+        #check-btn {
+            background-color: var(--strawberry);
+            color: var(--white);
+        }
+
+        #next-btn {
+            display: none; /* Hidden until answer is checked */
+            background-color: var(--black);
+            color: var(--white);
         }
 
         button:active {
@@ -84,19 +93,12 @@
             box-shadow: 2px 2px 0px var(--black);
         }
 
-        #next-btn {
-            display: none;
-            background-color: var(--black);
-        }
-
-        /* Animations */
+        /* Brain Freeze / Shiver Animations */
         @keyframes shiver {
             0% { transform: translate(2px, 1px) rotate(0deg); }
             10% { transform: translate(-1px, -2px) rotate(-1deg); }
             20% { transform: translate(-3px, 0px) rotate(1deg); }
             30% { transform: translate(3px, 2px) rotate(0deg); }
-            40% { transform: translate(1px, -1px) rotate(1deg); }
-            50% { transform: translate(-1px, 2px) rotate(-1deg); }
             100% { transform: translate(0,0) rotate(0); }
         }
 
@@ -105,7 +107,6 @@
             color: var(--ice) !important;
         }
 
-        /* Brain Freeze Ice Cube */
         #ice-overlay {
             position: fixed;
             top: 50%;
@@ -117,22 +118,19 @@
             pointer-events: none;
         }
 
+        .ice-active { display: block !important; animation: ice-shake 0.3s infinite; }
         @keyframes ice-shake {
             0% { transform: translate(-50%, -50%) scale(1); }
             50% { transform: translate(-52%, -48%) scale(1.1); }
             100% { transform: translate(-50%, -50%) scale(1); }
         }
 
-        .ice-active {
-            display: block !important;
-            animation: ice-shake 0.3s infinite;
-        }
-
         #feedback {
             font-size: 1.5rem;
-            margin-top: 10px;
+            margin-bottom: 15px;
             font-weight: bold;
             display: none;
+            text-transform: uppercase;
         }
     </style>
 </head>
@@ -145,8 +143,13 @@
     
     <input type="number" id="user-answer" placeholder="?" inputmode="numeric">
 
+    <!-- Check Button -->
     <button id="check-btn" onclick="checkAnswer()">CHECK!</button>
+    
+    <!-- Feedback Message -->
     <div id="feedback"></div>
+    
+    <!-- Next Button (Appears after checking) -->
     <button id="next-btn" onclick="nextProblem()">NEXT →</button>
 </div>
 
@@ -170,51 +173,45 @@
     }
 
     function strawberryBurst() {
-        // Burst of Red/Pink Confetti
+        // Red particles
         confetti({
-            particleCount: 150,
+            particleCount: 100,
             spread: 70,
             origin: { y: 0.6 },
-            colors: ['#FF0000', '#FF69B4', '#FFFFFF']
+            colors: ['#FF0000', '#FF69B4']
         });
-
-        // Burst of Strawberry Emojis
-        const scalar = 3;
-        const strawberry = confetti.shapeFromText({ text: '🍓', scalar });
-
+        // Strawberry Emojis
+        const strawberry = confetti.shapeFromText({ text: '🍓', scalar: 3 });
         confetti({
             shapes: [strawberry],
-            particleCount: 20,
-            scalar,
+            particleCount: 15,
+            scalar: 3,
             origin: { y: 0.6 }
         });
     }
 
     function brainFreeze() {
-        const body = document.body;
-        const ice = document.getElementById('ice-overlay');
-        const problem = document.getElementById('problem');
-
-        // Flash background
-        body.style.backgroundColor = 'var(--ice)';
-        ice.classList.add('ice-active');
-        problem.classList.add('shivering');
+        document.body.style.backgroundColor = 'var(--ice)';
+        document.getElementById('ice-overlay').classList.add('ice-active');
+        document.getElementById('problem').classList.add('shivering');
 
         setTimeout(() => {
-            body.style.backgroundColor = 'var(--lime)';
-            ice.classList.remove('ice-active');
-            problem.classList.remove('shivering');
-        }, 1500);
+            document.body.style.backgroundColor = 'var(--lime)';
+            document.getElementById('ice-overlay').classList.remove('ice-active');
+            document.getElementById('problem').classList.remove('shivering');
+        }, 1200);
     }
 
     function checkAnswer() {
         const input = document.getElementById('user-answer');
-        const nextBtn = document.getElementById('next-btn');
         const checkBtn = document.getElementById('check-btn');
+        const nextBtn = document.getElementById('next-btn');
         const feedback = document.getElementById('feedback');
 
         if (input.value === "") return;
 
+        feedback.style.display = "block";
+        
         if (parseInt(input.value) === currentAnswer) {
             strawberryBurst();
             feedback.innerText = "SWEET! 🍓";
@@ -225,32 +222,36 @@
             feedback.style.color = "var(--black)";
         }
 
-        feedback.style.display = "block";
+        // SWAP BUTTONS: Hide Check, Show Next
         checkBtn.style.display = "none";
         nextBtn.style.display = "block";
     }
 
     function nextProblem() {
+        // Reset the UI for the next question
         document.getElementById('user-answer').value = "";
         document.getElementById('feedback').style.display = "none";
+        
+        // SWAP BUTTONS BACK: Show Check, Hide Next
         document.getElementById('next-btn').style.display = "none";
         document.getElementById('check-btn').style.display = "block";
+        
         generateProblem();
         document.getElementById('user-answer').focus();
     }
 
+    // Keyboard support (Enter key works for both buttons)
     document.addEventListener('keypress', (e) => {
         if (e.key === 'Enter') {
-            if (document.getElementById('next-btn').style.display === 'block') nextProblem();
-            else checkAnswer();
+            if (document.getElementById('next-btn').style.display === 'block') {
+                nextProblem();
+            } else {
+                checkAnswer();
+            }
         }
     });
 
     generateProblem();
-
-    if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.register('./sw.js');
-    }
 </script>
 </body>
 </html>
