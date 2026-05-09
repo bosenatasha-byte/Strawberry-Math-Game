@@ -1,0 +1,17 @@
+{
+  "name": "Minimalist Math Practice",
+  "short_name": "Math",
+  "description": "A clean, minimalist math practice app.",
+  "start_url": "index.html",
+  "display": "standalone",
+  "background_color": "#f8f9fa",
+  "theme_color": "#a2d2ff",
+  "icons": [
+    {
+      "src": "https://cdn-icons-png.flaticon.com/512/5353/5353137.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
