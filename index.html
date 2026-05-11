@@ -42,7 +42,6 @@
             width: 90%;
             max-width: 400px;
             text-align: center;
-            position: relative;
         }
 
         #problem {
@@ -67,14 +66,14 @@
         button {
             width: 100%;
             padding: 20px;
-            font-size: 1.8rem;
+            font-size: 1.5rem;
             font-weight: 900;
             text-transform: uppercase;
             border: 4px solid var(--black);
             cursor: pointer;
             box-shadow: 4px 4px 0px var(--black);
-            margin-bottom: 10px;
-            transition: transform 0.1s;
+            margin-bottom: 15px; /* Spacing between buttons */
+            transition: all 0.1s;
         }
 
         #check-btn {
@@ -82,13 +81,21 @@
             color: var(--white);
         }
 
+        /* Success State for the Check Button */
+        #check-btn.correct-state {
+            background-color: var(--lime);
+            color: var(--black);
+            cursor: default;
+            pointer-events: none; /* Make it unclickable once correct */
+        }
+
         #next-btn {
-            display: none; /* Hidden until answer is checked */
+            display: none; /* Hidden initially */
             background-color: var(--black);
             color: var(--white);
         }
 
-        button:active {
+        button:active:not(.correct-state) {
             transform: translate(2px, 2px);
             box-shadow: 2px 2px 0px var(--black);
         }
@@ -98,14 +105,9 @@
             0% { transform: translate(2px, 1px) rotate(0deg); }
             10% { transform: translate(-1px, -2px) rotate(-1deg); }
             20% { transform: translate(-3px, 0px) rotate(1deg); }
-            30% { transform: translate(3px, 2px) rotate(0deg); }
             100% { transform: translate(0,0) rotate(0); }
         }
-
-        .shivering {
-            animation: shiver 0.2s infinite;
-            color: var(--ice) !important;
-        }
+        .shivering { animation: shiver 0.2s infinite; color: var(--ice) !important; }
 
         #ice-overlay {
             position: fixed;
@@ -117,20 +119,13 @@
             z-index: 100;
             pointer-events: none;
         }
-
-        .ice-active { display: block !important; animation: ice-shake 0.3s infinite; }
-        @keyframes ice-shake {
-            0% { transform: translate(-50%, -50%) scale(1); }
-            50% { transform: translate(-52%, -48%) scale(1.1); }
-            100% { transform: translate(-50%, -50%) scale(1); }
-        }
+        .ice-active { display: block !important; }
 
         #feedback {
-            font-size: 1.5rem;
+            font-size: 1.2rem;
             margin-bottom: 15px;
             font-weight: bold;
             display: none;
-            text-transform: uppercase;
         }
     </style>
 </head>
@@ -143,18 +138,17 @@
     
     <input type="number" id="user-answer" placeholder="?" inputmode="numeric">
 
-    <!-- Check Button -->
+    <!-- The Primary Button (Changes to 'Correct Answer') -->
     <button id="check-btn" onclick="checkAnswer()">CHECK!</button>
     
-    <!-- Feedback Message -->
+    <!-- The Secondary Button (Appears below) -->
+    <button id="next-btn" onclick="nextProblem()">NEXT QUESTION →</button>
+
     <div id="feedback"></div>
-    
-    <!-- Next Button (Appears after checking) -->
-    <button id="next-btn" onclick="nextProblem()">NEXT →</button>
 </div>
 
 <script>
-   let currentAnswer = 0;
+    let currentAnswer = 0;
 
     function generateProblem() {
         const isMultiplication = Math.random() > 0.5;
@@ -172,57 +166,75 @@
         }
     }
 
+    function strawberryBurst() {
+        confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 }, colors: ['#FF0000', '#FF69B4'] });
+        const strawberry = confetti.shapeFromText({ text: '🍓', scalar: 3 });
+        confetti({ shapes: [strawberry], particleCount: 15, scalar: 3, origin: { y: 0.6 } });
+    }
+
+    function brainFreeze() {
+        document.body.style.backgroundColor = 'var(--ice)';
+        document.getElementById('ice-overlay').classList.add('ice-active');
+        document.getElementById('problem').classList.add('shivering');
+        setTimeout(() => {
+            document.body.style.backgroundColor = 'var(--lime)';
+            document.getElementById('ice-overlay').classList.remove('ice-active');
+            document.getElementById('problem').classList.remove('shivering');
+        }, 1200);
+    }
+
     function checkAnswer() {
         const input = document.getElementById('user-answer');
         const checkBtn = document.getElementById('check-btn');
         const nextBtn = document.getElementById('next-btn');
         const feedback = document.getElementById('feedback');
 
-        // If user didn't type anything, do nothing
         if (input.value === "") return;
 
-        // Show feedback section
-        feedback.style.display = "block";
-        
+        // Hide keyboard on mobile
+        input.blur();
+
         if (parseInt(input.value) === currentAnswer) {
-            strawberryBurst(); // From the confetti library
-            feedback.innerText = "SWEET! 🍓";
-            feedback.style.color = "var(--strawberry)";
+            strawberryBurst();
+            // Change the button text and appearance
+            checkBtn.innerText = "CORRECT ANSWER!";
+            checkBtn.classList.add("correct-state");
+            
+            // Show the next button below it
+            nextBtn.style.display = "block";
         } else {
             brainFreeze();
-            feedback.innerText = `BRRR! IT WAS ${currentAnswer}`;
-            feedback.style.color = "var(--black)";
+            feedback.style.display = "block";
+            feedback.innerText = `WRONG! IT WAS ${currentAnswer}`;
+            
+            // Even if wrong, we show the next button so they can continue
+            nextBtn.style.display = "block";
         }
-
-        // FORCE THE BUTTON SWAP
-        // We hide the red check button and show the black next button
-        checkBtn.setAttribute("style", "display: none !important");
-        nextBtn.setAttribute("style", "display: block !important");
-        
-        // Hide the keyboard on mobile so user can see the button
-        input.blur(); 
     }
 
     function nextProblem() {
-        // 1. Clear the box
+        const checkBtn = document.getElementById('check-btn');
+        const nextBtn = document.getElementById('next-btn');
+        const feedback = document.getElementById('feedback');
+
+        // Reset UI
         document.getElementById('user-answer').value = "";
+        feedback.style.display = "none";
         
-        // 2. Hide feedback
-        document.getElementById('feedback').style.display = "none";
+        // Reset Check Button
+        checkBtn.innerText = "CHECK!";
+        checkBtn.classList.remove("correct-state");
         
-        // 3. Swap buttons back (Show Check, Hide Next)
-        document.getElementById('next-btn').setAttribute("style", "display: none !important");
-        document.getElementById('check-btn').setAttribute("style", "display: block !important");
+        // Hide Next Button
+        nextBtn.style.display = "none";
         
-        // 4. New Math
         generateProblem();
     }
 
-    // This makes the "Go" / "Enter" button on your phone keyboard work
+    // Keyboard "Enter" logic
     document.addEventListener('keypress', (e) => {
         if (e.key === 'Enter') {
-            const nextBtn = document.getElementById('next-btn');
-            if (nextBtn.style.display === 'block' || nextBtn.getAttribute('style')?.includes('block')) {
+            if (document.getElementById('next-btn').style.display === 'block') {
                 nextProblem();
             } else {
                 checkAnswer();
